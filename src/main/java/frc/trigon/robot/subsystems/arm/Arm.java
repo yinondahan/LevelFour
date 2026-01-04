@@ -14,7 +14,7 @@ import frc.trigon.lib.hardware.phoenix6.talonfx.TalonFXMotor;
 
 public class Arm extends SubsystemBase {
     private final TalonFXMotor motor = ArmConstants.MOTOR;
-    private final PIDController pidController = ArmConstants.PID_CONTROLLER;
+    private final PIDController pidController = ArmConstants.PID;
     private final ArmFeedforward feedforward = ArmConstants.FEEDFORWARD;
     private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(ArmConstants.FOC_ENABLED);
     private final CANcoder encoder = ArmConstants.ENCODER;
@@ -77,7 +77,7 @@ public class Arm extends SubsystemBase {
     }
 
     private Rotation2d getCurrentAngle() {
-        final double rotations = ArmConstants.ANGLE_STATUS_SIGNAL.refresh().getValueAsDouble();
+        final double rotations = ArmConstants.ANGLE_SIGNAL.refresh().getValueAsDouble();
         return Rotation2d.fromRotations(rotations);
     }
 
