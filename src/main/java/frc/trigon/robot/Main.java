@@ -6,6 +6,7 @@
 package frc.trigon.robot;
 
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.trigon.lib.hardware.RobotHardwareStats;
 
 public final class Main {
     private Main() {

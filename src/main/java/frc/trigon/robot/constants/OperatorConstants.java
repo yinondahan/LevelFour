@@ -26,10 +26,10 @@ public class OperatorConstants {
     public static final IntakeAssistCommand.AssistMode DEFAULT_INTAKE_ASSIST_MODE = IntakeAssistCommand.AssistMode.ALTERNATE_ASSIST;
 
     public static final Trigger
+            DEBUGGING_TRIGGER = OPERATOR_CONTROLLER.n(),
             RESET_HEADING_TRIGGER = DRIVER_CONTROLLER.y(),
             DRIVE_FROM_DPAD_TRIGGER = new Trigger(() -> DRIVER_CONTROLLER.getPov() != -1),
             TOGGLE_BRAKE_TRIGGER = OPERATOR_CONTROLLER.g().or(RobotController::getUserButton),
-            DEBUGGING_TRIGGER = OPERATOR_CONTROLLER.f2(),
             FORWARD_QUASISTATIC_CHARACTERIZATION_TRIGGER = OPERATOR_CONTROLLER.right(),
             BACKWARD_QUASISTATIC_CHARACTERIZATION_TRIGGER = OPERATOR_CONTROLLER.left(),
             FORWARD_DYNAMIC_CHARACTERIZATION_TRIGGER = OPERATOR_CONTROLLER.up(),

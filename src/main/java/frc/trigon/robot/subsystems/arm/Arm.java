@@ -1,89 +1,105 @@
 package frc.trigon.robot.subsystems.arm;
 
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.trigon.lib.hardware.RobotHardwareStats;
 import frc.trigon.lib.hardware.phoenix6.cancoder.CANcoderEncoder;
 import frc.trigon.lib.hardware.phoenix6.cancoder.CANcoderSignal;
 import frc.trigon.lib.hardware.phoenix6.talonfx.TalonFXMotor;
+import frc.trigon.lib.hardware.phoenix6.talonfx.TalonFXSignal;
+import frc.trigon.lib.hardware.simulation.SingleJointedArmSimulation;
+import frc.trigon.robot.subsystems.MotorSubsystem;
+import frc.trigon.robot.subsystems.swerve.swervemodule.SwerveModuleConstants;
+import org.littletonrobotics.junction.Logger;
 
-
-public class Arm extends SubsystemBase {
+public class Arm extends MotorSubsystem {
     private final TalonFXMotor motor = ArmConstants.MOTOR;
-    private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(ArmConstants.FOC_ENABLED);
-    private final DynamicMotionMagicVoltage positionRequest = new DynamicMotionMagicVoltage(0, ArmConstants.MAX_VELOCITY, ArmConstants.MAX_ACCELERATION, ArmConstants.MAX_JERK).withEnableFOC(ArmConstants.FOC_ENABLED);
     private final CANcoderEncoder encoder = ArmConstants.ENCODER;
-    private final TrapezoidProfile profile = new TrapezoidProfile(ArmConstants.CONSTRAINTS);
-    private TrapezoidProfile.State goalState = new TrapezoidProfile.State();
-    private TrapezoidProfile.State initialState = new TrapezoidProfile.State();
-    private final Timer profileTimer = new Timer();
+    private final VoltageOut voltageRequest = new VoltageOut(0).withEnableFOC(ArmConstants.FOC_ENABLED);
+    private final DynamicMotionMagicVoltage positionRequest = new DynamicMotionMagicVoltage(
+            0,
+            ArmConstants.MAX_VELOCITY,
+            ArmConstants.MAX_ACCELERATION,
+            ArmConstants.MAX_JERK
+    ).withEnableFOC(ArmConstants.FOC_ENABLED);
+    private Rotation2d targetAngle = Rotation2d.fromDegrees(0);
 
     public Arm() {
+        setName(ArmConstants.MECHANISM_NAME);
     }
 
-    public boolean atState(ArmConstants.ArmState targetState) {
-        Rotation2d currentAngle = getCurrentAngle();
-        Rotation2d targetAngle = targetState.targetAngle;
-
-        return Math.abs(
-                currentAngle.minus(targetAngle).getRotations()
-        ) <= ArmConstants.TOLERANCE.getRotations();
+    @Override
+    public void updateLog(SysIdRoutineLog log) {
+        log.motor("Arm")
+                .angularPosition(Units.Rotations.of(getCurrentAngle().getRotations()))
+                .angularVelocity(Units.RotationsPerSecond.of(motor.getSignal(TalonFXSignal.VELOCITY)))
+                .voltage(Units.Volts.of(motor.getSignal(TalonFXSignal.MOTOR_VOLTAGE)));
     }
 
-    void followSetpoint(Rotation2d setpoint) {
-        setTargetVoltage(pidOutput + ffOutput);
+    @Override
+    public void updateMechanism() {
+        ArmConstants.MECHANISM.update(
+                getCurrentAngle(),
+                Rotation2d.fromRotations(motor.getSignal(TalonFXSignal.CLOSED_LOOP_REFERENCE))
+        );
     }
 
-    void setTargetAngle(Rotation2d targetAngle) {
-        final Rotation2d rotations = Rotation2d.fromRotations(targetAngle.getDegrees());
-        motor.setControl(positionRequest.withPosition());
+    @Override
+    public void sysIDDrive(double targetVoltage) {
+        motor.setControl(voltageRequest.withOutput(targetVoltage));
+        System.out.println(targetVoltage);
     }
 
-    void stop() {
+    @Override
+    public SysIdRoutine.Config getSysIDConfig() {
+        return ArmConstants.SYSID_CONFIG;
+    }
+
+    @Override
+    public void setBrake(boolean brake) {
+        motor.setBrake(brake);
+    }
+
+    @Override
+    public void updatePeriodically() {
+        motor.update();
+        encoder.update();
+        Logger.recordOutput("Arm/CurrentPositionDegrees", getCurrentAngle().getDegrees());
+    }
+
+    @Override
+    public void stop() {
         motor.stopMotor();
     }
 
-    void initializeMotionProfile(Rotation2d targetPosition) {
-        initialState = new TrapezoidProfile.State(
-                getCurrentAngle().getRotations(),
-                encoder.getSignal(CANcoderSignal.VELOCITY)
+    public boolean atTargetAngle() {
+        return atAngle(targetAngle);
+    }
+
+    public boolean atAngle(Rotation2d angle) {
+        return Math.abs(
+                angle.minus(getCurrentAngle()).getDegrees()
+        ) < ArmConstants.TOLERANCE.getDegrees();
+    }
+
+    public void setTargetState(ArmConstants.ArmState targetState) {
+        setTargetAngle(targetState.targetAngle);
+    }
+
+    public void setTargetAngle(Rotation2d targetAngle) {
+        this.targetAngle = targetAngle;
+        motor.setControl(
+                positionRequest.withPosition(targetAngle.getRotations())
         );
-
-        goalState = new TrapezoidProfile.State(targetPosition.getRotations(), 0);
-
-        profileTimer.restart();
     }
 
-    void followMotionProfile() {
-        final TrapezoidProfile.State setpoint = calculateSetpoint();
-        final Rotation2d setpointAsRotation = Rotation2d.fromRotations(setpoint.position);
-        followSetpoint(setpointAsRotation);
-    }
-
-    private TrapezoidProfile.State calculateSetpoint() {
-        return profile.calculate(profileTimer.get(), initialState, goalState);
-    }
-
-    private double calculatePIDOutput(Rotation2d targetAngle) {
-        return pidController.calculate(getCurrentAngle().getRotations(), targetAngle.getRotations());
-    }
-
-    private double calculateFeedForward() {
-        double position = getCurrentAngle().getRotations();
-        double velocity = 0;
-        return feedforward.calculate(position, velocity);
-    }
-
-    private Rotation2d getCurrentAngle() {
-        final double rotations = ArmConstants.ENCODER.getSignal(CANcoderSignal.POSITION);
-        return Rotation2d.fromRotations(rotations);
-    }
-
-    private void setTargetVoltage(double voltage) {
-        motor.setControl(voltageRequest.withOutput(voltage));
+    public Rotation2d getCurrentAngle() {
+        return Rotation2d.fromRotations(
+                encoder.getSignal(CANcoderSignal.POSITION)
+        );
     }
 }
