@@ -18,7 +18,7 @@ import frc.trigon.lib.utilities.mechanisms.SingleJointedArmMechanism2d;
 
 public class ArmConstants {
     private static final int
-            MOTOR_ID = 6,
+            MOTOR_ID = 9,
             ENCODER_ID = 12;
     private static final String
             MOTOR_NAME = "ArmMotor",
@@ -28,8 +28,8 @@ public class ArmConstants {
 
     static final double GEAR_RATIO = 42;
     static final double
-            MAX_VELOCITY = RobotHardwareStats.isSimulation() ? 2.46 : 0,
-            MAX_ACCELERATION = RobotHardwareStats.isSimulation() ? 67.2 : 0,
+            MAX_VELOCITY = RobotHardwareStats.isSimulation() ? 1 : 0,
+            MAX_ACCELERATION = RobotHardwareStats.isSimulation() ? 1 : 0,
             MAX_JERK = MAX_ACCELERATION * 10;
 
     private static final DCMotor GEARBOX = DCMotor.getKrakenX60Foc(1);
@@ -51,8 +51,8 @@ public class ArmConstants {
     );
 
     static final SysIdRoutine.Config SYSID_CONFIG = new SysIdRoutine.Config(
-            Units.Volts.of(1.5).per(Units.Seconds),
-            Units.Volts.of(3),
+            Units.Volts.of(1).per(Units.Seconds),
+            Units.Volts.of(4),
             Units.Second.of(1000)
     );
 
@@ -72,7 +72,7 @@ public class ArmConstants {
     }
 
     private static void configureMotor() {
-        TalonFXConfiguration config = new TalonFXConfiguration();
+        final TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -81,13 +81,13 @@ public class ArmConstants {
         config.Feedback.FeedbackRemoteSensorID = ENCODER.getID();
         config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
 
-        config.Slot0.kP = RobotHardwareStats.isSimulation() ? 34 : 0;
-        config.Slot0.kI = RobotHardwareStats.isSimulation() ? 1 : 0;
-        config.Slot0.kD = RobotHardwareStats.isSimulation() ? 3 : 0;
-        config.Slot0.kS = RobotHardwareStats.isSimulation() ? 0.026 : 0;
-        config.Slot0.kV = RobotHardwareStats.isSimulation() ? 4.87 : 0;
-        config.Slot0.kA = RobotHardwareStats.isSimulation() ? 0.178 : 0;
-        config.Slot0.kG = RobotHardwareStats.isSimulation() ? 0.112 : 0;
+        config.Slot0.kP = RobotHardwareStats.isSimulation() ? 3 : 0;
+        config.Slot0.kI = RobotHardwareStats.isSimulation() ? 0 : 0;
+        config.Slot0.kD = RobotHardwareStats.isSimulation() ? 0.5 : 0;
+        config.Slot0.kS = RobotHardwareStats.isSimulation() ? 0.0215 : 0;
+        config.Slot0.kV = RobotHardwareStats.isSimulation() ? 5.43 : 0;
+        config.Slot0.kA = RobotHardwareStats.isSimulation() ? 0 : 0;
+        config.Slot0.kG = RobotHardwareStats.isSimulation() ? 0.2785 : 0;
 
         config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
         config.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign;
@@ -109,7 +109,7 @@ public class ArmConstants {
     }
 
     private static void configureEncoder() {
-        CANcoderConfiguration config = new CANcoderConfiguration();
+        final CANcoderConfiguration config = new CANcoderConfiguration();
 
         config.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
         config.MagnetSensor.MagnetOffset = 0;

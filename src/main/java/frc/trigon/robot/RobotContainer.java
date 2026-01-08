@@ -22,6 +22,7 @@ import frc.trigon.robot.poseestimation.poseestimator.PoseEstimator;
 import frc.trigon.robot.subsystems.MotorSubsystem;
 import frc.trigon.robot.subsystems.arm.Arm;
 import frc.trigon.robot.subsystems.arm.ArmCommands;
+import frc.trigon.robot.subsystems.arm.ArmConstants;
 import frc.trigon.robot.subsystems.swerve.Swerve;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -57,7 +58,8 @@ public class RobotContainer {
     }
 
     private void bindDefaultCommands() {
-        SWERVE.setDefaultCommand(GeneralCommands.getFieldRelativeDriveCommand());
+        //SWERVE.setDefaultCommand(GeneralCommands.getFieldRelativeDriveCommand());
+        ARM.setDefaultCommand(ArmCommands.getSetTargetStateCommand(ArmConstants.ArmState.REST));
     }
 
     private void bindControllerCommands() {
@@ -65,6 +67,7 @@ public class RobotContainer {
         OperatorConstants.DRIVE_FROM_DPAD_TRIGGER.whileTrue(CommandConstants.SELF_RELATIVE_DRIVE_FROM_DPAD_COMMAND);
         OperatorConstants.TOGGLE_BRAKE_TRIGGER.onTrue(GeneralCommands.getToggleBrakeCommand());
         OperatorConstants.DEBUGGING_TRIGGER.whileTrue(ArmCommands.getDebuggingCommand());
+        OperatorConstants.TARGET_ANGLE_TRIGGER.whileTrue(ArmCommands.getSetTargetStateCommand(ArmConstants.ArmState.HIGH));
     }
 
     private void configureSysIDBindings(MotorSubsystem subsystem) {

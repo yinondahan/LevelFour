@@ -6,14 +6,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.trigon.lib.hardware.RobotHardwareStats;
 import frc.trigon.lib.hardware.phoenix6.cancoder.CANcoderEncoder;
 import frc.trigon.lib.hardware.phoenix6.cancoder.CANcoderSignal;
 import frc.trigon.lib.hardware.phoenix6.talonfx.TalonFXMotor;
 import frc.trigon.lib.hardware.phoenix6.talonfx.TalonFXSignal;
-import frc.trigon.lib.hardware.simulation.SingleJointedArmSimulation;
 import frc.trigon.robot.subsystems.MotorSubsystem;
-import frc.trigon.robot.subsystems.swerve.swervemodule.SwerveModuleConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Arm extends MotorSubsystem {
@@ -51,7 +48,6 @@ public class Arm extends MotorSubsystem {
     @Override
     public void sysIDDrive(double targetVoltage) {
         motor.setControl(voltageRequest.withOutput(targetVoltage));
-        System.out.println(targetVoltage);
     }
 
     @Override
@@ -99,7 +95,7 @@ public class Arm extends MotorSubsystem {
 
     public Rotation2d getCurrentAngle() {
         return Rotation2d.fromRotations(
-                encoder.getSignal(CANcoderSignal.POSITION)
+                motor.getSignal(TalonFXSignal.POSITION)
         );
     }
 }
